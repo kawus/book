@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { book, getAllChapters } from "@/data/book";
+import { ContinueReading } from "@/components/ContinueReading";
 
 export default function LandingPage() {
   const firstChapter = getAllChapters()[0];
@@ -46,8 +47,13 @@ export default function LandingPage() {
               </p>
             )}
 
-            {/* CTA Button */}
+            {/* Continue Reading (shows if user has progress) */}
             <div className="mt-8">
+              <ContinueReading />
+            </div>
+
+            {/* CTA Button */}
+            <div className="mt-4">
               <Link
                 href={`/chapter/${firstChapter.id}`}
                 className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white shadow-[0_1px_2px_rgba(0,0,0,0.1)] transition-all duration-150 hover:-translate-y-px hover:bg-gray-800 hover:shadow-[0_2px_4px_rgba(0,0,0,0.15)]"

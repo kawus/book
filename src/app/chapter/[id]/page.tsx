@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { book, getChapterById, getAdjacentChapters } from "@/data/book";
 import { MobileNav } from "@/components/MobileNav";
+import { SaveProgress } from "@/components/SaveProgress";
 
 interface ChapterPageProps {
   params: Promise<{ id: string }>;
@@ -24,6 +25,9 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Save reading progress */}
+      <SaveProgress chapterId={id} />
+
       {/* Header */}
       <header className="border-b border-gray-200">
         <div className="mx-auto max-w-6xl px-6 py-4">
