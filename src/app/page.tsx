@@ -1,162 +1,104 @@
-"use client";
+import Link from "next/link";
+import { book, getAllChapters } from "@/data/book";
 
-import { useState } from "react";
-import { book, getAllChapters, getAdjacentChapters } from "@/data/book";
-
-export default function BookPage() {
-  const allChapters = getAllChapters();
-  const [currentChapterId, setCurrentChapterId] = useState(allChapters[0].id);
-
-  const currentChapter = allChapters.find((c) => c.id === currentChapterId);
-  const { prev, next } = getAdjacentChapters(currentChapterId);
-
-  // Find which section the current chapter belongs to
-  const currentSection = book.sections.find((section) =>
-    section.chapters.some((c) => c.id === currentChapterId)
-  );
+export default function LandingPage() {
+  const firstChapter = getAllChapters()[0];
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-gray-200">
-        <div className="mx-auto max-w-6xl px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight text-gray-900">
-                {book.title}
-              </h1>
-              <p className="text-sm text-gray-500">{book.author}</p>
+      {/* Hero Section */}
+      <main className="mx-auto max-w-4xl px-6 py-16 lg:py-24">
+        <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-start lg:gap-16">
+          {/* Cover Image Placeholder */}
+          <div className="w-64 shrink-0 lg:w-72">
+            <div className="aspect-[2/3] rounded-lg bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-8 shadow-[0_2px_4px_rgba(0,0,0,0.02),0_4px_8px_rgba(0,0,0,0.04),0_8px_16px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.08)]">
+              <div className="flex h-full flex-col justify-between text-white">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-widest text-gray-400">
+                    {book.author}
+                  </p>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold leading-tight tracking-tight">
+                    {book.title}
+                  </h2>
+                  {book.subtitle && (
+                    <p className="mt-2 text-sm leading-relaxed text-gray-400">
+                      {book.subtitle}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Book Info */}
+          <div className="flex-1 text-center lg:text-left">
+            <p className="mb-2 text-sm font-medium text-gray-400">
+              By {book.author}
+            </p>
+            <h1 className="text-4xl font-semibold tracking-tight text-gray-900 lg:text-5xl">
+              {book.title}
+            </h1>
+            {book.subtitle && (
+              <p className="mt-4 text-xl leading-relaxed text-gray-600">
+                {book.subtitle}
+              </p>
+            )}
+
+            {/* CTA Button */}
+            <div className="mt-8">
+              <Link
+                href={`/chapter/${firstChapter.id}`}
+                className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white shadow-[0_1px_2px_rgba(0,0,0,0.1)] transition-all duration-150 hover:-translate-y-px hover:bg-gray-800 hover:shadow-[0_2px_4px_rgba(0,0,0,0.15)]"
+              >
+                Start Reading
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </Link>
+            </div>
+
+            {/* Table of Contents Preview */}
+            <div className="mt-12 border-t border-gray-200 pt-8">
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-400">
+                Contents
+              </h3>
+              <div className="space-y-4">
+                {book.sections.map((section) => (
+                  <div key={section.id}>
+                    <p className="mb-2 font-semibold text-gray-900">
+                      {section.title}
+                    </p>
+                    <ul className="space-y-1">
+                      {section.chapters.map((chapter) => (
+                        <li key={chapter.id}>
+                          <Link
+                            href={`/chapter/${chapter.id}`}
+                            className="text-sm text-gray-600 transition-colors duration-150 hover:text-gray-900"
+                          >
+                            {chapter.title}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </header>
-
-      <div className="mx-auto max-w-6xl">
-        <div className="flex">
-          {/* Sidebar - Table of Contents */}
-          <aside className="hidden w-72 shrink-0 border-r border-gray-200 lg:block">
-            <nav className="sticky top-0 h-screen overflow-y-auto p-6">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Contents
-              </p>
-
-              {book.sections.map((section) => (
-                <div key={section.id} className="mb-6">
-                  <p className="mb-2 text-sm font-semibold text-gray-900">
-                    {section.title}
-                  </p>
-                  <ul className="space-y-1">
-                    {section.chapters.map((chapter) => (
-                      <li key={chapter.id}>
-                        <button
-                          onClick={() => setCurrentChapterId(chapter.id)}
-                          className={`block w-full rounded-md px-3 py-2 text-left text-sm transition-colors duration-150 ${
-                            currentChapterId === chapter.id
-                              ? "bg-gray-100 font-medium text-gray-900"
-                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                          }`}
-                        >
-                          {chapter.title}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </nav>
-          </aside>
-
-          {/* Main Content */}
-          <main className="min-h-screen flex-1 px-6 py-12 lg:px-16">
-            {/* Mobile TOC Dropdown */}
-            <div className="mb-8 lg:hidden">
-              <select
-                value={currentChapterId}
-                onChange={(e) => setCurrentChapterId(e.target.value)}
-                className="w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-100"
-              >
-                {book.sections.map((section) => (
-                  <optgroup key={section.id} label={section.title}>
-                    {section.chapters.map((chapter) => (
-                      <option key={chapter.id} value={chapter.id}>
-                        {chapter.title}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </div>
-
-            {/* Section Label */}
-            {currentSection && (
-              <p className="mb-2 text-sm font-medium text-gray-400">
-                {currentSection.title}
-              </p>
-            )}
-
-            {/* Chapter Content */}
-            {currentChapter && (
-              <article className="prose mx-auto max-w-2xl">
-                <h1>{currentChapter.title}</h1>
-                <div
-                  dangerouslySetInnerHTML={{ __html: currentChapter.content }}
-                />
-              </article>
-            )}
-
-            {/* Chapter Navigation */}
-            <nav className="mx-auto mt-16 flex max-w-2xl items-center justify-between border-t border-gray-200 pt-8">
-              {prev ? (
-                <button
-                  onClick={() => setCurrentChapterId(prev.id)}
-                  className="group flex items-center gap-2 text-sm text-gray-600 transition-colors duration-150 hover:text-gray-900"
-                >
-                  <svg
-                    className="h-4 w-4 transition-transform duration-150 group-hover:-translate-x-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  <span className="font-medium">{prev.title}</span>
-                </button>
-              ) : (
-                <div />
-              )}
-
-              {next ? (
-                <button
-                  onClick={() => setCurrentChapterId(next.id)}
-                  className="group flex items-center gap-2 text-sm text-gray-600 transition-colors duration-150 hover:text-gray-900"
-                >
-                  <span className="font-medium">{next.title}</span>
-                  <svg
-                    className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-              ) : (
-                <div />
-              )}
-            </nav>
-          </main>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
