@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { book, getChapterById, getAdjacentChapters } from "@/data/book";
 import { SlideMenu } from "@/components/SlideMenu";
 import { SaveProgress } from "@/components/SaveProgress";
-import { AudioReader } from "@/components/AudioReader";
+import { ChapterContent } from "@/components/ChapterContent";
 
 interface ChapterPageProps {
   params: Promise<{ id: string }>;
@@ -35,12 +35,8 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
         <article className="prose">
           <h1>{chapter.title}</h1>
 
-          {/* Audio Reader Controls */}
-          <div className="not-prose mb-8">
-            <AudioReader htmlContent={chapter.content} />
-          </div>
-
-          <div dangerouslySetInnerHTML={{ __html: chapter.content }} />
+          {/* Chapter content with audio reader and highlighting */}
+          <ChapterContent htmlContent={chapter.content} />
         </article>
 
         {/* Simple Next Link */}

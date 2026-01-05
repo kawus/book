@@ -48,6 +48,7 @@
   --theme-text-muted: #71717a;
   --theme-border: #e4e4e7;
   --theme-border-hover: #d4d4d8;
+  --theme-highlight: rgba(255, 220, 100, 0.3); /* Soft yellow highlight */
 }
 
 /* Dark theme */
@@ -59,6 +60,7 @@
   --theme-text-muted: #71717a;
   --theme-border: #3f3f46;
   --theme-border-hover: #52525b;
+  --theme-highlight: rgba(255, 220, 100, 0.15); /* Softer for dark mode */
 }
 
 /* Base Styles */

@@ -14,16 +14,18 @@ const DEFAULT_SETTINGS: TTSSettings = {
 
 /**
  * Hook to manage text-to-speech using the Web Speech API.
- * Provides play/pause/stop controls and speed adjustment.
+ * Supports reading an array of paragraphs with index tracking for highlighting.
  */
 export function useTextToSpeech() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [rate, setRate] = useState(DEFAULT_SETTINGS.rate);
   const [isSupported, setIsSupported] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(-1);
 
-  // Keep track of current utterance for cleanup
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  // Keep track of paragraphs array and current position
+  const paragraphsRef = useRef<string[]>([]);
+  const currentIndexRef = useRef(-1);
 
   // Load saved rate from localStorage on mount
   useEffect(() => {
@@ -56,36 +58,55 @@ export function useTextToSpeech() {
     }
   }, []);
 
-  // Speak the given text
-  const speak = useCallback((text: string) => {
+  // Speak a single paragraph and call onEnd when done
+  const speakParagraph = useCallback((text: string, onEnd: () => void) => {
     if (!isSupported || typeof window === "undefined") return;
-
-    // Cancel any existing speech
-    window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = rate;
     utterance.pitch = 1;
 
-    // Track state changes
-    utterance.onstart = () => {
-      setIsPlaying(true);
-      setIsPaused(false);
-    };
+    utterance.onend = onEnd;
+    utterance.onerror = onEnd;
 
-    utterance.onend = () => {
-      setIsPlaying(false);
-      setIsPaused(false);
-    };
-
-    utterance.onerror = () => {
-      setIsPlaying(false);
-      setIsPaused(false);
-    };
-
-    utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
   }, [rate, isSupported]);
+
+  // Read through paragraphs sequentially
+  const speakNext = useCallback(() => {
+    const nextIndex = currentIndexRef.current + 1;
+
+    if (nextIndex >= paragraphsRef.current.length) {
+      // Finished all paragraphs
+      setIsPlaying(false);
+      setIsPaused(false);
+      setCurrentIndex(-1);
+      currentIndexRef.current = -1;
+      return;
+    }
+
+    currentIndexRef.current = nextIndex;
+    setCurrentIndex(nextIndex);
+
+    speakParagraph(paragraphsRef.current[nextIndex], speakNext);
+  }, [speakParagraph]);
+
+  // Start reading an array of paragraphs
+  const speakParagraphs = useCallback((paragraphs: string[]) => {
+    if (!isSupported || typeof window === "undefined") return;
+
+    // Cancel any existing speech
+    window.speechSynthesis.cancel();
+
+    paragraphsRef.current = paragraphs;
+    currentIndexRef.current = -1;
+
+    setIsPlaying(true);
+    setIsPaused(false);
+
+    // Start reading first paragraph
+    speakNext();
+  }, [isSupported, speakNext]);
 
   // Pause speech
   const pause = useCallback(() => {
@@ -107,18 +128,20 @@ export function useTextToSpeech() {
     window.speechSynthesis.cancel();
     setIsPlaying(false);
     setIsPaused(false);
+    setCurrentIndex(-1);
+    currentIndexRef.current = -1;
   }, [isSupported]);
 
   // Toggle play/pause
-  const toggle = useCallback((text: string) => {
+  const toggle = useCallback((paragraphs: string[]) => {
     if (isPlaying && !isPaused) {
       pause();
     } else if (isPlaying && isPaused) {
       resume();
     } else {
-      speak(text);
+      speakParagraphs(paragraphs);
     }
-  }, [isPlaying, isPaused, pause, resume, speak]);
+  }, [isPlaying, isPaused, pause, resume, speakParagraphs]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -134,7 +157,8 @@ export function useTextToSpeech() {
     isPaused,
     rate,
     isSupported,
-    speak,
+    currentIndex,
+    speakParagraphs,
     pause,
     resume,
     stop,
