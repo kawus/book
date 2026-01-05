@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getChapterById, getAllChapters } from "@/data/book";
 
 const STORAGE_KEY = "book-reading-progress";
@@ -34,8 +34,8 @@ export function useReadingProgress() {
     setIsLoaded(true);
   }, []);
 
-  // Save progress to localStorage
-  const saveProgress = (chapterId: string) => {
+  // Save progress to localStorage (memoized to prevent infinite loops)
+  const saveProgress = useCallback((chapterId: string) => {
     const newProgress: ReadingProgress = {
       chapterId,
       timestamp: Date.now(),
@@ -46,7 +46,7 @@ export function useReadingProgress() {
     } catch {
       // Ignore localStorage errors
     }
-  };
+  }, []);
 
   // Get chapter info for the saved progress
   const getProgressInfo = () => {
