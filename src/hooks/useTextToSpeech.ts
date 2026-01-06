@@ -13,19 +13,30 @@ const DEFAULT_SETTINGS: TTSSettings = {
 };
 
 /**
+ * Convert a character index to a word index by counting words before that position
+ */
+function getWordIndexFromCharIndex(text: string, charIndex: number): number {
+  const textBeforeCursor = text.slice(0, charIndex);
+  // Count words by splitting on whitespace
+  const words = textBeforeCursor.trim().split(/\s+/);
+  return words.length > 0 && words[0] !== "" ? words.length - 1 : 0;
+}
+
+/**
  * Hook to manage text-to-speech using the Web Speech API.
- * Supports reading an array of paragraphs with index tracking for highlighting.
+ * Supports reading an array of paragraphs with word-level tracking for highlighting.
  */
 export function useTextToSpeech() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [rate, setRate] = useState(DEFAULT_SETTINGS.rate);
   const [isSupported, setIsSupported] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [currentParagraphIndex, setCurrentParagraphIndex] = useState(-1);
+  const [currentWordIndex, setCurrentWordIndex] = useState(-1);
 
   // Keep track of paragraphs array and current position
   const paragraphsRef = useRef<string[]>([]);
-  const currentIndexRef = useRef(-1);
+  const currentParagraphIndexRef = useRef(-1);
 
   // Load saved rate from localStorage on mount
   useEffect(() => {
@@ -58,13 +69,25 @@ export function useTextToSpeech() {
     }
   }, []);
 
-  // Speak a single paragraph and call onEnd when done
+  // Speak a single paragraph with word boundary tracking
   const speakParagraph = useCallback((text: string, onEnd: () => void) => {
     if (!isSupported || typeof window === "undefined") return;
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = rate;
     utterance.pitch = 1;
+
+    // Track word boundaries for highlighting
+    utterance.onboundary = (event) => {
+      if (event.name === "word") {
+        const wordIndex = getWordIndexFromCharIndex(text, event.charIndex);
+        setCurrentWordIndex(wordIndex);
+      }
+    };
+
+    utterance.onstart = () => {
+      setCurrentWordIndex(0);
+    };
 
     utterance.onend = onEnd;
     utterance.onerror = onEnd;
@@ -74,19 +97,21 @@ export function useTextToSpeech() {
 
   // Read through paragraphs sequentially
   const speakNext = useCallback(() => {
-    const nextIndex = currentIndexRef.current + 1;
+    const nextIndex = currentParagraphIndexRef.current + 1;
 
     if (nextIndex >= paragraphsRef.current.length) {
       // Finished all paragraphs
       setIsPlaying(false);
       setIsPaused(false);
-      setCurrentIndex(-1);
-      currentIndexRef.current = -1;
+      setCurrentParagraphIndex(-1);
+      setCurrentWordIndex(-1);
+      currentParagraphIndexRef.current = -1;
       return;
     }
 
-    currentIndexRef.current = nextIndex;
-    setCurrentIndex(nextIndex);
+    currentParagraphIndexRef.current = nextIndex;
+    setCurrentParagraphIndex(nextIndex);
+    setCurrentWordIndex(-1); // Reset word index for new paragraph
 
     speakParagraph(paragraphsRef.current[nextIndex], speakNext);
   }, [speakParagraph]);
@@ -99,7 +124,7 @@ export function useTextToSpeech() {
     window.speechSynthesis.cancel();
 
     paragraphsRef.current = paragraphs;
-    currentIndexRef.current = -1;
+    currentParagraphIndexRef.current = -1;
 
     setIsPlaying(true);
     setIsPaused(false);
@@ -128,8 +153,9 @@ export function useTextToSpeech() {
     window.speechSynthesis.cancel();
     setIsPlaying(false);
     setIsPaused(false);
-    setCurrentIndex(-1);
-    currentIndexRef.current = -1;
+    setCurrentParagraphIndex(-1);
+    setCurrentWordIndex(-1);
+    currentParagraphIndexRef.current = -1;
   }, [isSupported]);
 
   // Toggle play/pause
@@ -157,7 +183,8 @@ export function useTextToSpeech() {
     isPaused,
     rate,
     isSupported,
-    currentIndex,
+    currentParagraphIndex,
+    currentWordIndex,
     speakParagraphs,
     pause,
     resume,

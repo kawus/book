@@ -203,3 +203,12 @@ body {
 [data-theme="dark"] .hover\:text-gray-900:hover {
   color: var(--theme-text);
 }
+
+/* Word-by-word TTS highlighting */
+.word-highlight {
+  background: var(--theme-highlight);
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  transition: background 150ms ease-out;
+}

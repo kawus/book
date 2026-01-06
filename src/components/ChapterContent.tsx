@@ -8,12 +8,12 @@ interface ChapterContentProps {
 }
 
 interface ParsedParagraph {
-  html: string;
   text: string;
+  words: string[];
 }
 
 /**
- * Parses HTML content into an array of paragraphs
+ * Parses HTML content into an array of paragraphs with words
  */
 function parseContent(html: string): ParsedParagraph[] {
   if (typeof document === "undefined") return [];
@@ -24,15 +24,17 @@ function parseContent(html: string): ParsedParagraph[] {
   // Get all paragraph elements
   const elements = doc.querySelectorAll("p");
 
-  return Array.from(elements).map((el) => ({
-    html: el.innerHTML,
-    text: el.textContent || "",
-  }));
+  return Array.from(elements).map((el) => {
+    const text = el.textContent || "";
+    // Split into words, preserving punctuation attached to words
+    const words = text.split(/\s+/).filter((w) => w.length > 0);
+    return { text, words };
+  });
 }
 
 /**
- * Chapter content with integrated audio reader and paragraph highlighting.
- * Highlights the current paragraph being read and auto-scrolls to keep it visible.
+ * Chapter content with integrated audio reader and word-by-word highlighting.
+ * Highlights the current word being read and auto-scrolls to keep it visible.
  */
 export function ChapterContent({ htmlContent }: ChapterContentProps) {
   const {
@@ -40,12 +42,13 @@ export function ChapterContent({ htmlContent }: ChapterContentProps) {
     isPaused,
     rate,
     isSupported,
-    currentIndex,
+    currentParagraphIndex,
+    currentWordIndex,
     toggle,
     updateRate,
   } = useTextToSpeech();
 
-  // Parse content into paragraphs
+  // Parse content into paragraphs with words
   const paragraphs = useMemo(() => parseContent(htmlContent), [htmlContent]);
 
   // Extract just the text for TTS
@@ -54,18 +57,18 @@ export function ChapterContent({ htmlContent }: ChapterContentProps) {
     [paragraphs]
   );
 
-  // Ref for the currently highlighted paragraph (for scrolling)
-  const highlightedRef = useRef<HTMLParagraphElement>(null);
+  // Ref for the currently highlighted word (for scrolling)
+  const highlightedWordRef = useRef<HTMLSpanElement>(null);
 
-  // Auto-scroll to highlighted paragraph
+  // Auto-scroll to highlighted word
   useEffect(() => {
-    if (currentIndex >= 0 && highlightedRef.current) {
-      highlightedRef.current.scrollIntoView({
+    if (currentWordIndex >= 0 && highlightedWordRef.current) {
+      highlightedWordRef.current.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
     }
-  }, [currentIndex]);
+  }, [currentParagraphIndex, currentWordIndex]);
 
   return (
     <div>
@@ -119,21 +122,23 @@ export function ChapterContent({ htmlContent }: ChapterContentProps) {
         </div>
       )}
 
-      {/* Paragraphs with highlighting */}
-      {paragraphs.map((paragraph, index) => (
-        <p
-          key={index}
-          ref={index === currentIndex ? highlightedRef : null}
-          className="transition-all duration-200"
-          style={{
-            backgroundColor:
-              index === currentIndex ? "var(--theme-highlight)" : "transparent",
-            borderRadius: index === currentIndex ? "4px" : "0",
-            margin: "0 -8px",
-            padding: "4px 8px",
-          }}
-          dangerouslySetInnerHTML={{ __html: paragraph.html }}
-        />
+      {/* Paragraphs with word-by-word highlighting */}
+      {paragraphs.map((paragraph, pIndex) => (
+        <p key={pIndex} className="mb-6">
+          {paragraph.words.map((word, wIndex) => {
+            const isHighlighted =
+              pIndex === currentParagraphIndex && wIndex === currentWordIndex;
+            return (
+              <span
+                key={wIndex}
+                ref={isHighlighted ? highlightedWordRef : null}
+                className={isHighlighted ? "word-highlight" : ""}
+              >
+                {word}{" "}
+              </span>
+            );
+          })}
+        </p>
       ))}
     </div>
   );
