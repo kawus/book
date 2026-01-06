@@ -72,9 +72,15 @@ export function ChapterContent({ htmlContent }: ChapterContentProps) {
 
   return (
     <div>
-      {/* Audio Controls */}
+      {/* Audio Controls - sticky so always accessible */}
       {isSupported && (
-        <div className="not-prose mb-8 flex items-center gap-3">
+        <div
+          className="not-prose sticky top-0 z-10 -mx-6 mb-8 flex items-center gap-3 px-6 py-3"
+          style={{
+            backgroundColor: "var(--theme-bg)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
           {/* Play/Pause Button */}
           <button
             onClick={() => toggle(paragraphTexts)}
