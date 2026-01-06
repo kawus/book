@@ -42,7 +42,6 @@ export function ChapterContent({ htmlContent }: ChapterContentProps) {
     isSupported,
     currentIndex,
     toggle,
-    stop,
     updateRate,
   } = useTextToSpeech();
 
@@ -67,8 +66,6 @@ export function ChapterContent({ htmlContent }: ChapterContentProps) {
       });
     }
   }, [currentIndex]);
-
-  const isActive = isPlaying || isPaused;
 
   return (
     <div>
@@ -101,27 +98,6 @@ export function ChapterContent({ htmlContent }: ChapterContentProps) {
             )}
           </button>
 
-          {/* Stop Button */}
-          {isActive && (
-            <button
-              onClick={stop}
-              className="flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-150 hover:bg-gray-50"
-              style={{
-                borderColor: "var(--theme-border)",
-                color: "var(--theme-text)",
-              }}
-              aria-label="Stop"
-            >
-              <svg
-                className="h-3.5 w-3.5"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <rect x="6" y="6" width="12" height="12" rx="1" />
-              </svg>
-            </button>
-          )}
-
           {/* Speed Selector */}
           <select
             value={rate}
@@ -140,13 +116,6 @@ export function ChapterContent({ htmlContent }: ChapterContentProps) {
               </option>
             ))}
           </select>
-
-          {/* Status text */}
-          {isActive && (
-            <span className="text-sm" style={{ color: "var(--theme-text-muted)" }}>
-              {isPaused ? "Paused" : "Playing..."}
-            </span>
-          )}
         </div>
       )}
 
